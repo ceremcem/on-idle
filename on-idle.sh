@@ -15,7 +15,8 @@ while true; do
   #echo $idleTimeMillis  # just for debug purposes.
   if [[ $idle = false && $idleTimeMillis -gt $idleAfter ]] ; then
     echo "start idle"   # or whatever command(s) you want to run...
-    "$@"
+    "$@" &
+    wait
     idle=true
   fi
 
