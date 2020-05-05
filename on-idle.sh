@@ -25,6 +25,7 @@ while true; do
     echo "start idle"   # or whatever command(s) you want to run...
     "$@" & exe_pid=$!
     wait
+    exe_pid=
     idle=true
   fi
 
