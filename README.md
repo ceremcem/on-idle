@@ -7,3 +7,9 @@ Run `command` if computer is idle for 5 seconds:
 ```
 on-idle.sh 5 command [arguments...]
 ```
+
+# Example 
+
+```
+on-idle.sh 3 notify-send "Computer was idle for last 3 seconds."
+```
