@@ -10,12 +10,20 @@ idle=false
 idleAfter=$(($1 * 1000))
 shift
 
+exe_pid=
+cleanup(){
+    echo "Cleaning up"
+    [[ -z $exe_pid ]] || kill $exe_pid
+}
+
+trap cleanup EXIT
+
 while true; do
   idleTimeMillis=$($_sdir/getIdle)
   #echo $idleTimeMillis  # just for debug purposes.
   if [[ $idle = false && $idleTimeMillis -gt $idleAfter ]] ; then
     echo "start idle"   # or whatever command(s) you want to run...
-    "$@" &
+    "$@" & exe_pid=$!
     wait
     idle=true
   fi
