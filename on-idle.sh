@@ -22,7 +22,7 @@ while true; do
   idleTimeMillis=$($_sdir/getIdle)
   #echo $idleTimeMillis  # just for debug purposes.
   if [[ $idle = false && $idleTimeMillis -gt $idleAfter ]] ; then
-    echo "start idle"   # or whatever command(s) you want to run...
+    echo "`date +'%d.%m.%Y %H:%M'`: Computer is now idle."   # or whatever command(s) you want to run...
     "$@" & exe_pid=$!
     wait
     exe_pid=
