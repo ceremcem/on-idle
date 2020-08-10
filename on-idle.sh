@@ -10,19 +10,33 @@ idle=false
 idleAfter=$(($1 * 1000))
 shift
 
+log(){
+    echo "`date +"%d.%m.%Y %H:%M"`  : $@"
+}
+
 exe_pid=
 cleanup(){
-    echo "Cleaning up"
+    log "Cleaning up"
     [[ -z $exe_pid ]] || kill $exe_pid
 }
 
 trap cleanup EXIT
 
+while :; do
+    $_sdir/getIdle > /dev/null \
+        && break \
+        || { \
+            log "Waiting for 'getIdle' to become ready..."; \
+            sleep 5; \
+           }
+done
+
+log "Started idle watchdog."
 while true; do
   idleTimeMillis=$($_sdir/getIdle)
   #echo $idleTimeMillis  # just for debug purposes.
   if [[ $idle = false && $idleTimeMillis -gt $idleAfter ]] ; then
-    echo "`date +'%d.%m.%Y %H:%M'`: Computer is now idle."   # or whatever command(s) you want to run...
+    log "Computer is now idle."   # or whatever command(s) you want to run...
     "$@" & exe_pid=$!
     wait
     exe_pid=
@@ -30,7 +44,7 @@ while true; do
   fi
 
   if [[ $idle = true && $idleTimeMillis -lt $idleAfter ]] ; then
-    echo "end idle"     # same here.
+    log "end idle"     # same here.
     idle=false
   fi
   sleep 1      # polling interval
