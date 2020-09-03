@@ -49,7 +49,7 @@ while true; do
       sleep 1
       if [[ $($_sdir/getIdle) -gt 500 ]]; then 
         idleBase=$(($idleBase + $idleTimeMs))
-        log "!!! adding offset by ${idleTimeMs}ms, total: $(($idleBase / 1000))s"
+        #log "!!! adding offset by ${idleTimeMs}ms, total: $(($idleBase / 1000))s"
       else
         idleBase=0
       fi
