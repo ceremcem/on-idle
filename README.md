@@ -8,6 +8,8 @@ Run `command` if computer is idle for 5 seconds:
 on-idle.sh 5 command [arguments...]
 ```
 
+When the idle duration ended, `command` process is killed. 
+
 # Example 
 
 ```

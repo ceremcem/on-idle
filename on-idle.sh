@@ -25,7 +25,7 @@ function format_seconds() {
 exe_pid=
 cleanup(){
     log "Cleaning up"
-    [[ -z $exe_pid ]] || kill $exe_pid
+    [[ -n $exe_pid ]] && kill $exe_pid
 }
 
 trap cleanup EXIT
@@ -60,13 +60,12 @@ while true; do
   if [[ $idle = false && $(($idleTimeMs + $idleBase)) -gt $idleAfterMs ]] ; then
     log "Computer is now idle. (after $(format_seconds $idleAfter))"   # or whatever command(s) you want to run...
     "$@" & exe_pid=$!
-    wait
-    exe_pid=
     idle=true
   fi
 
   if [[ $idle = true && $(($idleTimeMs + $idleBase)) -lt $idleAfterMs ]] ; then
     log "end idle"     # same here.
+    kill $exe_pid && exe_pid=
     idle=false
   fi
   sleep 1      # polling interval
