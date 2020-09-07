@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eu -o pipefail
+set -ue -o pipefail
 safe_source () { [[ ! -z ${1:-} ]] && source $1; _dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; _sdir=$(dirname "$(readlink -f "$0")"); }; safe_source
 
 # Example usage:
@@ -27,7 +27,7 @@ function format_seconds() {
 exe_pid=
 cleanup(){
     log "Cleaning up"
-    [[ -n $exe_pid ]] && kill $exe_pid 2> /dev/null
+    [[ -n $exe_pid ]] && { kill $exe_pid 2> /dev/null || true; }
 }
 
 trap cleanup EXIT
@@ -53,10 +53,9 @@ idleBase=0 # milliseconds, the offset
 idleTimeMsNew=
 log "Started idle watchdog. Timeout is: $(format_seconds $idleAfter)"
 while true; do
-  _idleTimeMsNew=$idleTimeMsNew
   idleTimeMsNew=$($IDLE_EXE)
   if [[ -n ${idleTimeMs:-} ]]; then 
-    if [[ $idle = false && $idleTimeMsNew -lt $idleTimeMs ]]; then
+    if [[ $idleTimeMsNew -lt $idleTimeMs ]]; then
       testDuration="0.2"; testDurationMs="200";
       sleep $testDuration
       testIdleMs=$($IDLE_EXE)
@@ -73,17 +72,18 @@ while true; do
   idleTimeMs=$idleTimeMsNew
   #echo $idleTimeMillis  # just for debug purposes.
   if [[ $idle = false && $(($idleTimeMs + $idleBase)) -gt $idleAfterMs ]] ; then
-    log "Computer is now idle. (after $(format_seconds $idleAfter))"   # or whatever command(s) you want to run...
-    "$@" & exe_pid=$!
+    log "Computer is now idle. (after $(format_seconds $idleAfter))"
+    ( "$@" & exe_pid=$! )
     idle=true
   fi
 
   if [[ $idle = true && $(($idleTimeMs + $idleBase)) -lt $idleAfterMs ]] ; then
-    log "end idle"     # same here.
-    kill $exe_pid 2> /dev/null
+    log "end idle."
+    kill $exe_pid 2> /dev/null || true
     exe_pid=
     idle=false
     idleBase=0
   fi
   sleep $pollInterval
 done
+
