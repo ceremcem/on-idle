@@ -6,6 +6,8 @@ safe_source () { [[ ! -z ${1:-} ]] && source $1; _dir="$(cd "$(dirname "${BASH_S
 # Run `command` after 10 seconds of idle:
 # $0 10 command
 
+DEBUG=
+
 idle=false
 idleAfter=$1
 idleAfterMs=$(($idleAfter * 1000))
@@ -25,32 +27,45 @@ function format_seconds() {
 exe_pid=
 cleanup(){
     log "Cleaning up"
-    [[ -n $exe_pid ]] && kill $exe_pid
+    [[ -n $exe_pid ]] && kill $exe_pid 2> /dev/null
 }
 
 trap cleanup EXIT
 
+IDLE_EXE=$_sdir/getIdle
+# copy to RAM if possible
+if cp $IDLE_EXE /dev/shm; then
+    IDLE_EXE=/dev/shm/getIdle
+else
+    log "IDLE_EXE can not be copied to RAM (/dev/shm)"
+fi
+
 while :; do
-    $_sdir/getIdle > /dev/null \
+    $IDLE_EXE > /dev/null \
         && break \
         || { \
             log "Waiting for 'getIdle' to become ready..."; \
             sleep 5; \
            }
 done
-
+pollInterval=0.2
 idleBase=0 # milliseconds, the offset
 idleTimeMsNew=
 log "Started idle watchdog. Timeout is: $(format_seconds $idleAfter)"
 while true; do
-  idleTimeMsNew=$($_sdir/getIdle)
+  _idleTimeMsNew=$idleTimeMsNew
+  idleTimeMsNew=$($IDLE_EXE)
   if [[ -n ${idleTimeMs:-} ]]; then 
     if [[ $idle = false && $idleTimeMsNew -lt $idleTimeMs ]]; then
-      sleep 1
-      if [[ $($_sdir/getIdle) -gt 500 ]]; then 
+      testDuration="0.2"; testDurationMs="200";
+      sleep $testDuration
+      testIdleMs=$($IDLE_EXE)
+      testDiff=$(($testIdleMs - $testDurationMs - $idleTimeMsNew))
+      if [[ $testDiff -gt 0 ]]; then 
         idleBase=$(($idleBase + $idleTimeMs))
-        #log "!!! adding offset by ${idleTimeMs}ms, total: $(($idleBase / 1000))s"
+        [[ -n $DEBUG ]] && log "DEBUG: adding offset by ${idleTimeMs}ms, total: $(($idleBase / 1000))s (testDiff: $testDiff)"
       else
+        [[ -n $DEBUG ]] && log "DEBUG: resetting idleBase counter (testDiff: $testDiff)"
         idleBase=0
       fi
     fi 
@@ -65,9 +80,10 @@ while true; do
 
   if [[ $idle = true && $(($idleTimeMs + $idleBase)) -lt $idleAfterMs ]] ; then
     log "end idle"     # same here.
-    kill $exe_pid && exe_pid=
+    kill $exe_pid 2> /dev/null
+    exe_pid=
     idle=false
+    idleBase=0
   fi
-  sleep 1      # polling interval
-
+  sleep $pollInterval
 done
