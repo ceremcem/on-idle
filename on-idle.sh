@@ -78,9 +78,15 @@ while true; do
   fi
 
   if [[ $idle = true && $(($idleTimeMs + $idleBase)) -lt $idleAfterMs ]] ; then
-    log "end idle. (killing: $exe_pid)"
-    kill $exe_pid 2> /dev/null || true
-    exe_pid=
+    if kill -0 $exe_pid 2> /dev/null; then
+        # process is alive
+        log "end of idle. (killing: $exe_pid)"
+        kill $exe_pid
+        exe_pid=
+    else
+        # process has already been exited
+        log "end of idle."
+    fi
     idle=false
     idleBase=0
   fi
