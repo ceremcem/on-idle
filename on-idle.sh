@@ -73,12 +73,12 @@ while true; do
   #echo $idleTimeMillis  # just for debug purposes.
   if [[ $idle = false && $(($idleTimeMs + $idleBase)) -gt $idleAfterMs ]] ; then
     log "Computer is now idle. (after $(format_seconds $idleAfter))"
-    ( "$@" & exe_pid=$! )
+    "$@" & exe_pid=$!
     idle=true
   fi
 
   if [[ $idle = true && $(($idleTimeMs + $idleBase)) -lt $idleAfterMs ]] ; then
-    log "end idle."
+    log "end idle. (killing: $exe_pid)"
     kill $exe_pid 2> /dev/null || true
     exe_pid=
     idle=false
