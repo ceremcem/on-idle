@@ -1,4 +1,4 @@
-> Taken from https://unix.stackexchange.com/a/122816/65781
+> Based on: https://unix.stackexchange.com/a/122816/65781
 
 # Usage 
 
