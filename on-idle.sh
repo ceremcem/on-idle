@@ -33,12 +33,6 @@ cleanup(){
 trap cleanup EXIT
 
 IDLE_EXE=$_sdir/getIdle
-# copy to RAM if possible
-if cp $IDLE_EXE /dev/shm; then
-    IDLE_EXE=/dev/shm/getIdle
-else
-    log "IDLE_EXE can not be copied to RAM (/dev/shm)"
-fi
 
 while :; do
     $IDLE_EXE > /dev/null \
