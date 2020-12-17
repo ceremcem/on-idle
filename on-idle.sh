@@ -8,8 +8,14 @@ safe_source () { [[ ! -z ${1:-} ]] && source $1; _dir="$(cd "$(dirname "${BASH_S
 
 DEBUG=
 
+_idleAfter=$1
+[[ $(echo $_idleAfter | awk -F":" '{print NF-1}') -ne 2 ]] && { \
+    echo "Duration should be in HH:MM:SS format"; \
+    exit 1; }
+idleAfter=$(echo $_idleAfter | awk -F: '{ print ($1 * 3600) + ($2 * 60) + $3 }')
+
+
 idle=false
-idleAfter=$1
 idleAfterMs=$(($idleAfter * 1000))
 shift
 
