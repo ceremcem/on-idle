@@ -72,9 +72,14 @@ while true; do
   idleTimeMs=$idleTimeMsNew
   #echo $idleTimeMillis  # just for debug purposes.
   if [[ $idle = false && $(($idleTimeMs + $idleBase)) -gt $idleAfterMs ]] ; then
-    log "Computer is now idle. (after $(format_seconds $idleAfter))"
-    "$@" & exe_pid=$!
     idle=true
+    log "Computer is now idle. (after $(format_seconds $idleAfter))"
+    if [[ -n $exe_pid ]]; then
+        log "INFO: Previous process (pid:$exe_pid) is still alive. Not starting a new one."
+    else
+        "$@" & exe_pid=$!
+        log "Exe pid: $exe_pid"
+    fi
   fi
 
   if [[ $idle = true && $(($idleTimeMs + $idleBase)) -lt $idleAfterMs ]] ; then
@@ -82,7 +87,9 @@ while true; do
         # process is alive
         log "end of idle. (killing: $exe_pid)"
         kill $exe_pid
-        exe_pid=
+        if kill -s 0 $exe_pid 2> /dev/null; then
+            log "INFO: Exe (pid: $exe_pid) refuses to stop."
+        fi
     else
         # process has already been exited
         log "end of idle."
@@ -90,6 +97,12 @@ while true; do
     idle=false
     idleBase=0
   fi
+
+  if ! kill -s 0 $exe_pid 2> /dev/null; then
+    # process is dead
+    exe_pid=
+  fi
+
   sleep $pollInterval
 done
 
