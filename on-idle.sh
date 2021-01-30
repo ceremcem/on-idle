@@ -87,7 +87,7 @@ while true; do
         # process is alive
         log "end of idle. (killing: $exe_pid)"
         kill $exe_pid
-        timeout 5 tail --pid=$exe_pid -f /dev/null
+        timeout 5 tail --pid=$exe_pid -f /dev/null || true
         if kill -s 0 $exe_pid 2> /dev/null; then
             log "INFO: Exe (pid: $exe_pid) refuses to stop."
         fi
